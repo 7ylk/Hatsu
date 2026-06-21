@@ -527,18 +527,24 @@ local SaveManager = {} do
             pcall(writefile, "Hatsu/loader.lua", getgenv().HatsuLoader)
         end
 
-        local queue_on_teleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
-        if queue_on_teleport then
+        local queueTeleport = queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+        if queueTeleport then
             local Players = game:GetService("Players")
             local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
             
             LocalPlayer.OnTeleport:Connect(function(State)
-                if State == Enum.TeleportState.Started then
-                    local autoExecuteToggle = SaveManager.Library.Toggles.SaveManager_AutoExecuteOnTeleport
-                    if autoExecuteToggle and autoExecuteToggle.Value then
+                local autoExecuteToggle = SaveManager.Library.Toggles.SaveManager_AutoExecuteOnTeleport
+                if autoExecuteToggle and autoExecuteToggle.Value then
+                    local isStarted = false
+                    pcall(function()
+                        if State == Enum.TeleportState.Started or tostring(State):find("Started") or tostring(State) == "Enum.TeleportState.Started" then
+                            isStarted = true
+                        end
+                    end)
+                    if isStarted then
                         local loader = getgenv().HatsuLoader or (isfile and isfile("Hatsu/loader.lua") and readfile("Hatsu/loader.lua"))
                         if loader then
-                            queue_on_teleport(loader)
+                            pcall(queueTeleport, loader)
                         end
                     end
                 end
