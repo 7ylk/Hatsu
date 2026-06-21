@@ -109,6 +109,16 @@ local function ServerHop(method)
 	local targetServer = servers[1]
 	if targetServer then
 		Library:Notify("Teleporting to server with " .. targetServer.playing .. " players and " .. (targetServer.ping or "unknown") .. " ping...")
+		local queueTeleport = queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+		if queueTeleport then
+			local autoExecuteToggle = Toggles.SaveManager_AutoExecuteOnTeleport
+			if autoExecuteToggle and autoExecuteToggle.Value then
+				local loader = getgenv().HatsuLoader or (isfile and isfile("Hatsu/loader.lua") and readfile("Hatsu/loader.lua"))
+				if loader then
+					pcall(queueTeleport, loader)
+				end
+			end
+		end
 		task.wait(1)
 		TeleportService:TeleportToPlaceInstance(PlaceId, targetServer.id, LocalPlayer)
 	else
