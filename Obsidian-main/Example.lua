@@ -2,13 +2,16 @@
 -- Hatsu Loader configuration for auto execute on teleport (always keep at the top of your script execution)
 getgenv().HatsuLoader = [[
 local repo = "https://raw.githubusercontent.com/7ylk/Hatsu/main/Obsidian-main/"
-loadstring(game:HttpGet(repo .. "Example.lua"))()
+loadstring(game:HttpGet(repo .. "Example.lua?t=" .. os.time()))()
 ]]
 
 local repo = "https://raw.githubusercontent.com/7ylk/Hatsu/main/Obsidian-main/"
-local Library = loadstring(game:HttpGet(repo .. "Hatsu.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+local function get(file)
+    return game:HttpGet(repo .. file .. "?t=" .. os.time())
+end
+local Library = loadstring(get("Hatsu.lua"))()
+local ThemeManager = loadstring(get("addons/ThemeManager.lua"))()
+local SaveManager = loadstring(get("addons/SaveManager.lua"))()
 
 local Options = Library.Options
 local Toggles = Library.Toggles
