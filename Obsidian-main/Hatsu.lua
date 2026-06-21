@@ -1206,6 +1206,24 @@ local function ParentUI(UI: Instance, SkipHiddenUI: boolean?)
     SafeParentUI(UI, gethui)
 end
 
+-- Unload previous library execution if active
+if getgenv().Library and getgenv().Library.Unload then
+    pcall(getgenv().Library.Unload, getgenv().Library)
+end
+
+-- Scan and destroy existing GUIs to prevent duplicates
+local function cleanOldUI(parent)
+    if not parent then return end
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("ScreenGui") and (child.Name == "Hatsu" or child.Name == "HatsuLoading") then
+            pcall(child.Destroy, child)
+        end
+    end
+end
+pcall(cleanOldUI, gethui())
+pcall(cleanOldUI, CoreGui)
+pcall(cleanOldUI, LocalPlayer:FindFirstChild("PlayerGui"))
+
 local ScreenGui = New("ScreenGui", {
     Name = "Hatsu",
     DisplayOrder = 998,
