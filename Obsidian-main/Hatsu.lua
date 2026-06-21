@@ -1,3 +1,6 @@
+local HatsuExecutionId = os.clock()
+getgenv().HatsuExecutionId = HatsuExecutionId
+
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
@@ -19,7 +22,14 @@ local gethui = gethui or function()
     return CoreGui
 end
 
-local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+local LocalPlayer = Players.LocalPlayer
+if not LocalPlayer then
+    Players.PlayerAdded:Wait()
+    LocalPlayer = Players.LocalPlayer
+    if getgenv().HatsuExecutionId ~= HatsuExecutionId then
+        return
+    end
+end
 local Mouse = cloneref(LocalPlayer:GetMouse())
 
 local Labels = {}
@@ -164,6 +174,9 @@ do
 
     for AssetName, _ in CustomImageManagerAssets do
         CustomImageManager.DownloadAsset(AssetName)
+    end
+    if getgenv().HatsuExecutionId ~= HatsuExecutionId then
+        return
     end
 end
 
@@ -1065,6 +1078,10 @@ local FetchIcons, Icons = pcall(function()
     ) :: () -> IconModule)()
 end)
 
+if getgenv().HatsuExecutionId ~= HatsuExecutionId then
+    return
+end
+
 function Library:GetIcon(IconName: string)
     if not FetchIcons then
         return
@@ -1207,8 +1224,20 @@ local function ParentUI(UI: Instance, SkipHiddenUI: boolean?)
 end
 
 -- Unload previous library execution if active
-if getgenv().Library and getgenv().Library.Unload then
-    pcall(getgenv().Library.Unload, getgenv().Library)
+if getgenv().Library then
+    if getgenv().Library.Unload then
+        pcall(getgenv().Library.Unload, getgenv().Library)
+    end
+    if getgenv().Library.ScreenGui then
+        pcall(function()
+            getgenv().Library.ScreenGui:Destroy()
+        end)
+    end
+    if getgenv().Library.ActiveLoading and getgenv().Library.ActiveLoading.ScreenGui then
+        pcall(function()
+            getgenv().Library.ActiveLoading.ScreenGui:Destroy()
+        end)
+    end
 end
 
 -- Scan and destroy existing GUIs to prevent duplicates
@@ -2095,14 +2124,20 @@ function Library:AddTooltip(InfoStr: string, DisabledInfoStr: string, HoverInsta
     function TooltipTable:Destroy()
         for Index = #TooltipTable.Signals, 1, -1 do
             local Connection = table.remove(TooltipTable.Signals, Index)
-            if Connection and Connection.Connected then
-                Connection:Disconnect()
+            if Connection then
+                pcall(function()
+                    if Connection.Connected then
+                        Connection:Disconnect()
+                    end
+                end)
             end
         end
 
         if CurrentHoverInstance == HoverInstance then
             if TooltipLabel then
-                TooltipLabel.Visible = false
+                pcall(function()
+                    TooltipLabel.Visible = false
+                end)
             end
 
             CurrentHoverInstance = nil
@@ -2120,8 +2155,12 @@ end
 function Library:Unload()
     for Index = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Index)
-        if Connection and Connection.Connected then
-            Connection:Disconnect()
+        if Connection then
+            pcall(function()
+                if Connection.Connected then
+                    Connection:Disconnect()
+                end
+            end)
         end
     end
 
@@ -2136,11 +2175,15 @@ function Library:Unload()
     Library.Unloaded = true
 
     if Library.ActiveLoading then
-        Library.ActiveLoading:Destroy()
+        pcall(function()
+            Library.ActiveLoading:Destroy()
+        end)
     end
 
-    if ScreenGui then
-        ScreenGui:Destroy()
+    if Library.ScreenGui then
+        pcall(function()
+            Library.ScreenGui:Destroy()
+        end)
     end
 
     getgenv().Library = nil
@@ -9489,7 +9532,11 @@ function Library:CreateLoading(LoadingInfo)
             RotationTween:Cancel()
         end
 
-        ScreenGui:Destroy()
+        if Loading.ScreenGui then
+            pcall(function()
+                Loading.ScreenGui:Destroy()
+            end)
+        end
         Loading.Destroyed = true
         Library.ActiveLoading = nil
 
